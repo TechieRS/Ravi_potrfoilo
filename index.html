@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Portfolio website for Ravi Bhushan Sharma, software developer, startup founder, and computer science student."
+    />
+    <title>Ravi Bhushan Sharma | Portfolio</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #03070b;
+        color: #f7fafc;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      }
+
+      #root {
+        min-height: 100vh;
+      }
+
+      .boot-fallback {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px;
+        background:
+          radial-gradient(circle at 18% 20%, rgba(0, 194, 245, 0.18), transparent 30%),
+          radial-gradient(circle at 82% 12%, rgba(0, 229, 168, 0.14), transparent 26%),
+          linear-gradient(135deg, #03070b 0%, #071016 54%, #03070b 100%);
+      }
+
+      .boot-fallback__panel {
+        max-width: 760px;
+      }
+
+      .boot-fallback__eyebrow {
+        color: #4fffc7;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .boot-fallback h1 {
+        margin: 16px 0;
+        font-size: clamp(42px, 8vw, 86px);
+        line-height: 0.98;
+      }
+
+      .boot-fallback p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <main class="boot-fallback">
+        <section class="boot-fallback__panel">
+          <div class="boot-fallback__eyebrow">Tactical Command Center</div>
+          <h1>Ravi Bhushan Sharma</h1>
+          <p>College Student, Software Developer & Startup Founder based in Patna, Bihar, India.</p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
