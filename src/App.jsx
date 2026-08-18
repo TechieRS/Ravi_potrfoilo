@@ -20,8 +20,9 @@ import {
   shouldForwardProp,
 } from '@chakra-ui/react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Icosahedron, Sparkles, Stars, Torus } from '@react-three/drei';
-import { Bloom, ChromaticAberration, EffectComposer } from '@react-three/postprocessing';
+import { Float, Icosahedron, Sparkles, Sphere, Stars, Torus } from '@react-three/drei';
+import { Bloom, ChromaticAberration, EffectComposer, Glitch } from '@react-three/postprocessing';
+import { GlitchMode } from 'postprocessing';
 import {
   isValidMotionProp,
   motion,
@@ -33,6 +34,7 @@ import {
 import { ReactLenis } from 'lenis/react';
 import 'lenis/dist/lenis.css';
 import Tilt from 'react-parallax-tilt';
+import useSound from 'use-sound';
 import {
   FaBrain,
   FaChrome,
@@ -58,6 +60,8 @@ const neonSoft = '#00cc00';
 const glassBg = 'whiteAlpha.50';
 const glassBorder = 'rgba(0,255,0,0.55)';
 const spring = { type: 'spring', stiffness: 100, damping: 15 };
+const uiClickSound =
+  'data:audio/wav;base64,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';
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 70, rotateX: -8 },
@@ -363,15 +367,22 @@ function AnimatedCyberGrid() {
       backgroundImage="
         linear-gradient(rgba(0,255,0,0.16) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,255,0,0.16) 1px, transparent 1px),
+        linear-gradient(60deg, rgba(0,255,0,0.08) 1px, transparent 1px),
+        linear-gradient(120deg, rgba(0,255,0,0.08) 1px, transparent 1px),
         radial-gradient(circle, rgba(0,255,0,0.22) 1px, transparent 1px)
       "
-      backgroundSize="62px 62px, 62px 62px, 30px 30px"
+      backgroundSize="62px 62px, 62px 62px, 72px 72px, 72px 72px, 30px 30px"
       transformOrigin="50% 100%"
       sx={{
         transform: 'perspective(800px) rotateX(62deg)',
         maskImage: 'linear-gradient(to top, black, transparent 78%)',
       }}
-      animate={{ backgroundPosition: ['0px 0px, 0px 0px, 0px 0px', '0px 248px, 0px 248px, 0px 120px'] }}
+      animate={{
+        backgroundPosition: [
+          '0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px',
+          '0px 248px, 0px 248px, 72px 144px, -72px 144px, 0px 120px',
+        ],
+      }}
       transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
     />
   );
@@ -426,6 +437,49 @@ function TechStackTicker() {
   );
 }
 
+function CommandTerminal() {
+  return (
+    <MotionBox
+      w={{ base: '100%', md: '560px' }}
+      maxW="100%"
+      border="1px solid"
+      borderColor="rgba(0,255,0,0.34)"
+      borderRadius="18px"
+      bg="rgba(0,10,0,0.42)"
+      backdropFilter="blur(18px)"
+      boxShadow="0 0 34px rgba(0,255,0,0.16), inset 0 0 28px rgba(0,255,0,0.07)"
+      overflow="hidden"
+      initial={{ opacity: 0, y: 18, rotateX: -8 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      transition={{ ...spring, delay: 1.72 }}
+    >
+      <HStack
+        spacing={2}
+        px={4}
+        py={3}
+        borderBottom="1px solid"
+        borderColor="rgba(0,255,0,0.22)"
+        bg="rgba(0,255,0,0.045)"
+      >
+        {['#00ff00', '#00cc00', '#66ff66'].map((color) => (
+          <Box key={color} w="9px" h="9px" borderRadius="full" bg={color} boxShadow={`0 0 10px ${color}`} />
+        ))}
+        <Text color="green.200" fontFamily="'Fira Code', monospace" fontSize="xs" fontWeight="950">
+          CLASSIFIED_NEURAL_TERMINAL
+        </Text>
+      </HStack>
+      <Stack spacing={3} p={4} fontFamily="'Fira Code', monospace" fontSize={{ base: 'xs', md: 'sm' }}>
+        <Text color="green.200" textShadow="0 0 12px rgba(0,255,0,0.42)">
+          <TerminalTypewriter text="> INITIALIZING SYSTEM..." delay={0} />
+        </Text>
+        <Text color="whiteAlpha.850">
+          <TerminalTypewriter text="> LOADING FULL-STACK PROTOCOLS: REACT, PYTHON, FASTAPI." delay={1250} />
+        </Text>
+      </Stack>
+    </MotionBox>
+  );
+}
+
 function Reticle({ top, bottom, left, right, reverse = false }) {
   return (
     <MotionBox
@@ -464,73 +518,75 @@ function Reticle({ top, bottom, left, right, reverse = false }) {
   );
 }
 
-function AlienCore() {
+function HologramGlobe() {
   const groupRef = useRef();
-  const innerRef = useRef();
+  const globeRef = useRef();
 
   useFrame((state, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.32;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.45) * 0.18;
+      groupRef.current.rotation.y += delta * 0.26;
+      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.4) * 0.12;
     }
 
-    if (innerRef.current) {
-      innerRef.current.rotation.x -= delta * 0.72;
-      innerRef.current.rotation.z += delta * 0.52;
+    if (globeRef.current) {
+      globeRef.current.rotation.y += delta * 0.34;
+      globeRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.7) * 0.08;
     }
   });
 
   return (
     <group ref={groupRef}>
-      <pointLight color={neon} intensity={9} distance={11} position={[0, 0, 0]} />
-      <pointLight color="#00e676" intensity={3} distance={14} position={[2.8, 1.8, 3]} />
-      <Float speed={2.2} rotationIntensity={0.7} floatIntensity={0.9}>
-        <Torus args={[2.15, 0.055, 22, 180]} rotation={[Math.PI / 2, 0, 0]}>
-          <meshStandardMaterial color={neonSoft} emissive={neon} emissiveIntensity={2.4} roughness={0.18} metalness={0.82} />
-        </Torus>
-        <Torus args={[1.48, 0.038, 18, 160]} rotation={[0.2, Math.PI / 2, 0]}>
-          <meshStandardMaterial color={neon} emissive={neon} emissiveIntensity={2.9} roughness={0.25} metalness={0.9} />
-        </Torus>
-        <Torus args={[0.92, 0.025, 16, 130]} rotation={[Math.PI / 2.45, 0.6, 0.4]}>
-          <meshStandardMaterial color="#88ff88" emissive={neon} emissiveIntensity={1.8} roughness={0.22} metalness={0.7} />
-        </Torus>
-        <group ref={innerRef}>
-          <Icosahedron args={[0.92, 2]}>
+      <pointLight color={neon} intensity={11} distance={12} position={[0, 0, 0]} />
+      <pointLight color="#00e676" intensity={4} distance={15} position={[3.2, 2.2, 3.5]} />
+      <Float speed={2.1} rotationIntensity={0.62} floatIntensity={0.82}>
+        <group ref={globeRef}>
+          <Sphere args={[1.48, 96, 96]}>
             <meshStandardMaterial
-              color="#021602"
+              color="#001700"
               emissive={neon}
-              emissiveIntensity={2.1}
+              emissiveIntensity={1.55}
               roughness={0.08}
-              metalness={0.95}
+              metalness={0.92}
               wireframe
+              transparent
+              opacity={0.76}
             />
-          </Icosahedron>
+          </Sphere>
+          <Sphere args={[1.52, 32, 32]}>
+            <meshStandardMaterial
+              color={neon}
+              emissive={neon}
+              emissiveIntensity={0.72}
+              roughness={0.2}
+              metalness={0.7}
+              wireframe
+              transparent
+              opacity={0.16}
+            />
+          </Sphere>
         </group>
-        <Icosahedron args={[1.95, 1]} rotation={[0.3, 0.8, 0.2]}>
-          <meshStandardMaterial color="#001a00" emissive={neon} emissiveIntensity={0.55} roughness={0.2} metalness={0.75} wireframe transparent opacity={0.45} />
+        <Torus args={[1.86, 0.024, 16, 180]} rotation={[Math.PI / 2, 0, 0]}>
+          <meshStandardMaterial color={neonSoft} emissive={neon} emissiveIntensity={2.8} roughness={0.15} metalness={0.88} />
+        </Torus>
+        <Torus args={[1.98, 0.018, 16, 180]} rotation={[0.35, Math.PI / 2, 0]}>
+          <meshStandardMaterial color={neon} emissive={neon} emissiveIntensity={2.4} roughness={0.18} metalness={0.85} />
+        </Torus>
+        <Torus args={[2.16, 0.014, 12, 180]} rotation={[Math.PI / 2.25, 0.8, 0.2]}>
+          <meshStandardMaterial color="#88ff88" emissive={neon} emissiveIntensity={2} roughness={0.22} metalness={0.7} />
+        </Torus>
+        <Icosahedron args={[2.28, 1]} rotation={[0.3, 0.8, 0.2]}>
+          <meshStandardMaterial color="#001a00" emissive={neon} emissiveIntensity={0.48} roughness={0.2} metalness={0.75} wireframe transparent opacity={0.34} />
         </Icosahedron>
-        {Array.from({ length: 8 }).map((_, index) => {
-          const angle = (index / 8) * Math.PI * 2;
-          const x = Math.cos(angle) * 1.45;
-          const y = Math.sin(angle) * 0.9;
-          const z = Math.sin(angle * 1.7) * 0.9;
+        {Array.from({ length: 16 }).map((_, index) => {
+          const angle = (index / 16) * Math.PI * 2;
+          const x = Math.cos(angle) * 1.7;
+          const y = Math.sin(angle * 1.35) * 1.12;
+          const z = Math.sin(angle) * 1.7;
 
           return (
-            <mesh key={`node-${index}`} position={[x, y, z]} scale={[0.045, 0.045, 0.045]}>
+            <mesh key={`node-${index}`} position={[x, y, z]} scale={[0.038, 0.038, 0.038]}>
               <sphereGeometry args={[1, 16, 16]} />
               <meshStandardMaterial color={neon} emissive={neon} emissiveIntensity={5} />
-            </mesh>
-          );
-        })}
-        {Array.from({ length: 12 }).map((_, index) => {
-          const angle = (index / 12) * Math.PI * 2;
-          const x = Math.cos(angle) * 2.14;
-          const y = Math.sin(angle) * 2.14;
-
-          return (
-            <mesh key={index} position={[x, y, 0]} scale={[0.08, 0.08, 0.08]}>
-              <sphereGeometry args={[1, 16, 16]} />
-              <meshStandardMaterial color={neon} emissive={neon} emissiveIntensity={4} />
             </mesh>
           );
         })}
@@ -540,6 +596,7 @@ function AlienCore() {
 }
 
 function WebGLHero() {
+  const [playUiSound] = useSound(uiClickSound, { volume: 0.28, interrupt: true });
   const { scrollYProgress } = useScroll();
   const heroY = useTransform(scrollYProgress, [0, 0.18], [0, 72]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.16], [1, 0.12]);
@@ -640,12 +697,12 @@ function WebGLHero() {
               maxW="1200px"
               textShadow="0 0 22px rgba(0,255,0,0.82), 0 0 80px rgba(0,255,0,0.42)"
             >
-              <ScrambleText text="RAVI BHUSHAN SHARMA" duration={2000} />
+              <ScrambleText text="RAVI BHUSHAN SHARMA" duration={2500} />
             </Heading>
           </MotionBox>
           <MotionBox animate={{ opacity: [0.72, 1, 0.72], textShadow: ['0 0 10px rgba(0,255,0,0.22)', '0 0 22px rgba(0,255,0,0.48)', '0 0 10px rgba(0,255,0,0.22)'] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}>
           <Text color="whiteAlpha.850" fontSize={{ base: 'lg', md: '2xl' }} maxW="780px" fontWeight="700">
-            <TerminalTypewriter text="Software Developer & Startup Founder" delay={900} />
+            <TerminalTypewriter text="Software Developer & Startup Founder." delay={900} />
           </Text>
           </MotionBox>
           <HStack mt={6} spacing={4} flexWrap="wrap">
@@ -682,6 +739,7 @@ function WebGLHero() {
                   href={button.href}
                   target={button.target}
                   rel={button.target ? 'noreferrer' : undefined}
+                  onMouseEnter={playUiSound}
                   leftIcon={<Icon as={button.icon} />}
                   bg="transparent"
                   border="1px solid #00ff00"
@@ -719,10 +777,11 @@ function WebGLHero() {
               </MotionBox>
             ))}
           </HStack>
+          <CommandTerminal />
           <MotionBox
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring, delay: 1.65 }}
+            transition={{ ...spring, delay: 1.95 }}
             pt={2}
             w="100%"
           >
@@ -750,11 +809,12 @@ function WebGLHero() {
           <Stars radius={90} depth={42} count={3800} factor={4} saturation={0} fade speed={0.85} />
           <Sparkles count={110} scale={7} size={2.8} speed={0.35} color={neon} opacity={0.45} />
           <group scale={0.82}>
-            <AlienCore />
+            <HologramGlobe />
           </group>
           <EffectComposer>
             <Bloom height={300} luminanceSmoothing={0.9} luminanceThreshold={0.2} intensity={2.7} />
             <ChromaticAberration offset={[0.002, 0.002]} />
+            <Glitch delay={[2.4, 6.5]} duration={[0.08, 0.18]} strength={[0.08, 0.2]} mode={GlitchMode.SPORADIC} />
           </EffectComposer>
         </Canvas>
       </Box>
@@ -763,6 +823,7 @@ function WebGLHero() {
 }
 
 function FloatingNav() {
+  const [playUiSound] = useSound(uiClickSound, { volume: 0.18, interrupt: true });
   const links = ['Home', 'Ventures', 'Projects', 'Timeline'];
 
   return (
@@ -787,6 +848,7 @@ function FloatingNav() {
           key={link}
           as="a"
           href={`#${index === 3 ? 'timeline' : link.toLowerCase()}`}
+          onMouseEnter={playUiSound}
           size="sm"
           borderRadius="full"
           bg={index === 0 ? 'green.400' : 'transparent'}
@@ -882,6 +944,8 @@ function TechTag({ children }) {
 }
 
 function Ventures() {
+  const [playUiSound] = useSound(uiClickSound, { volume: 0.22, interrupt: true });
+
   return (
     <Box id="ventures" as="section" py={{ base: 18, md: 28 }}>
       <Container maxW="7xl">
@@ -931,6 +995,7 @@ function Ventures() {
                             as={Link}
                             href={link.href}
                             isExternal
+                            onMouseEnter={playUiSound}
                             rightIcon={<FaExternalLinkAlt />}
                             bg="green.400"
                             color="black"
@@ -959,6 +1024,7 @@ function Ventures() {
 }
 
 function ScrollFlyProject({ project, index }) {
+  const [playUiSound] = useSound(uiClickSound, { volume: 0.2, interrupt: true });
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -990,6 +1056,7 @@ function ScrollFlyProject({ project, index }) {
             </Flex>
             <Button
               w="100%"
+              onMouseEnter={playUiSound}
               bg="green.400"
               color="black"
               borderRadius="full"
